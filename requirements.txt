@@ -1,0 +1,44 @@
+# Web框架和API
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# 数据处理
+pandas==2.1.3
+numpy==1.24.3
+
+# 网络请求
+requests==2.31.0
+urllib3==2.1.0
+httpx==0.25.2
+
+# HTML解析
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# 数据库
+sqlite3  # Python内置，无需安装
+
+# 文件处理
+openpyxl==3.1.2
+chardet==5.2.0
+
+# 工具库
+tqdm==4.66.1
+colorama==0.4.6
+
+# 地理位置服务（可选）
+geopy==2.4.0
+
+# 定时任务
+schedule==1.2.0
+
+# 日志
+loguru==0.7.2
+
+# 开发和测试
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# 部署相关
+gunicorn==21.2.0

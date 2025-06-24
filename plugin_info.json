@@ -1,0 +1,151 @@
+{
+  "name": "农产品市场价格监控系统",
+  "version": "1.0.0",
+  "description": "实时监控全国农产品市场价格，提供地理位置就近推荐、价格趋势分析、API接口服务等功能。支持8核32GB CPU环境部署，集成ModelScope Library。",
+  "author": "xiaohai",
+  "category": "实用工具",
+  "tags": ["农产品", "价格监控", "API服务", "数据分析", "地理位置"],
+  "icon": "plugin_icon.png",
+  "screenshots": [
+    "screenshot1.png",
+    "screenshot2.png",
+    "screenshot3.png"
+  ],
+  "requirements": {
+    "os": "ubuntu22.04",
+    "python": "3.11",
+    "memory": "32GB",
+    "cpu": "8核",
+    "disk": "10GB",
+    "network": "需要互联网连接"
+  },
+  "features": [
+    "实时爬取全国各省农产品市场价格数据",
+    "提供RESTful API接口服务",
+    "根据地理位置推荐就近市场价格",
+    "支持价格趋势分析和历史对比",
+    "自动化定时数据更新和清理",
+    "支持Docker容器化部署",
+    "集成Prometheus和Grafana监控",
+    "支持CSV、JSON、Excel格式数据导出",
+    "智能重试和断点续传机制",
+    "支持多种数据库存储方案"
+  ],
+  "api_endpoints": [
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "description": "健康检查接口"
+    },
+    {
+      "path": "/api/provinces",
+      "method": "GET", 
+      "description": "获取省份列表"
+    },
+    {
+      "path": "/api/varieties",
+      "method": "GET",
+      "description": "获取品种列表"
+    },
+    {
+      "path": "/api/markets",
+      "method": "GET",
+      "description": "获取市场列表"
+    },
+    {
+      "path": "/api/prices/query",
+      "method": "POST",
+      "description": "查询市场价格数据"
+    },
+    {
+      "path": "/api/prices/nearby",
+      "method": "POST",
+      "description": "根据地理位置查询附近价格"
+    }
+  ],
+  "installation": {
+    "type": "script",
+    "script": "deploy.sh",
+    "docker_support": true,
+    "docker_compose": "docker-compose.yml"
+  },
+  "configuration": {
+    "config_files": [
+      "config/app_config.json",
+      "scheduler_config.json",
+      ".env"
+    ],
+    "environment_variables": [
+      "API_HOST",
+      "API_PORT", 
+      "DB_PATH",
+      "LOG_LEVEL"
+    ]
+  },
+  "ports": [
+    {
+      "port": 8000,
+      "protocol": "HTTP",
+      "description": "API服务端口"
+    },
+    {
+      "port": 80,
+      "protocol": "HTTP", 
+      "description": "Nginx代理端口"
+    },
+    {
+      "port": 3000,
+      "protocol": "HTTP",
+      "description": "Grafana监控面板"
+    },
+    {
+      "port": 9090,
+      "protocol": "HTTP",
+      "description": "Prometheus监控"
+    }
+  ],
+  "data_sources": [
+    {
+      "name": "农业农村部信息中心",
+      "url": "https://pfsc.agri.cn",
+      "description": "全国农产品批发市场价格信息系统"
+    }
+  ],
+  "supported_regions": [
+    "北京市", "天津市", "河北省", "山西省", "内蒙古自治区",
+    "辽宁省", "吉林省", "黑龙江省", "上海市", "江苏省",
+    "浙江省", "安徽省", "福建省", "江西省", "山东省",
+    "河南省", "湖北省", "湖南省", "广东省", "广西壮族自治区",
+    "海南省", "重庆市", "四川省", "贵州省", "云南省",
+    "西藏自治区", "陕西省", "甘肃省", "青海省", "宁夏回族自治区",
+    "新疆维吾尔自治区"
+  ],
+  "supported_varieties": [
+    "白萝卜", "胡萝卜", "土豆", "白菜", "西红柿", "黄瓜",
+    "茄子", "辣椒", "豆角", "韭菜", "菠菜", "芹菜",
+    "大葱", "洋葱", "生姜", "大蒜", "苹果", "香蕉",
+    "橙子", "梨", "葡萄", "西瓜", "猪肉", "牛肉",
+    "羊肉", "鸡肉", "鸡蛋", "大米", "小麦", "玉米"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/example/market-price-system",
+  "documentation": "README.md",
+  "support": {
+    "email": "support@example.com",
+    "issues": "https://github.com/example/market-price-system/issues"
+  },
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2024-12-05",
+      "changes": [
+        "初始版本发布",
+        "支持全国31个省份数据爬取",
+        "提供完整的RESTful API接口",
+        "集成地理位置服务",
+        "支持Docker容器化部署",
+        "集成监控和告警功能"
+      ]
+    }
+  ]
+}

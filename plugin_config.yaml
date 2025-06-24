@@ -1,0 +1,274 @@
+# 农产品市场价格监控系统插件配置文件
+# 适用于 8核32GB CPU环境部署
+
+# 插件基本信息
+plugin:
+  name: "农产品市场价格监控系统"
+  version: "1.0.0"
+  author: "xiaohai"
+  description: "实时监控全国农产品市场价格，提供API接口和地理位置服务"
+  category: "实用工具"
+  
+# 系统要求
+requirements:
+  os: "ubuntu22.04"
+  python: "3.11"
+  cpu_cores: 8
+  memory_gb: 32
+  disk_gb: 10
+  network: true
+  
+# 服务配置
+services:
+  api:
+    name: "market-price-api"
+    port: 8000
+    host: "0.0.0.0"
+    workers: 4
+    timeout: 30
+    
+  scheduler:
+    name: "market-price-scheduler"
+    interval_minutes: 30
+    cleanup_hours: 24
+    report_hours: 6
+    
+  nginx:
+    port: 80
+    ssl_port: 443
+    enable_ssl: false
+    
+  monitoring:
+    prometheus_port: 9090
+    grafana_port: 3000
+    enable_monitoring: true
+
+# 数据库配置
+database:
+  type: "sqlite"
+  path: "data/market_data.db"
+  backup_enabled: true
+  backup_interval_hours: 24
+  retention_days: 90
+  
+# 爬虫配置
+crawler:
+  base_url: "https://pfsc.agri.cn/api"
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  timeout: 30
+  retry_times: 3
+  retry_delay: 5
+  concurrent_requests: 5
+  
+  # 支持的省份（空数组表示全部）
+  provinces: []
+  
+  # 优先品种
+  priority_varieties:
+    - "白萝卜"
+    - "土豆" 
+    - "白菜"
+    - "西红柿"
+    - "黄瓜"
+    - "茄子"
+    - "辣椒"
+    - "豆角"
+    - "韭菜"
+    - "菠菜"
+
+# 地理位置服务配置
+location:
+  enable_location_service: true
+  default_radius_km: 50
+  max_radius_km: 200
+  cache_enabled: true
+  cache_ttl_minutes: 60
+  
+# API配置
+api:
+  enable_cors: true
+  cors_origins: ["*"]
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+    burst: 10
+  
+  # API密钥（可选）
+  api_key_required: false
+  api_keys: []
+  
+  # 响应配置
+  max_results_per_query: 1000
+  default_page_size: 100
+  
+# 日志配置
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_file_size_mb: 100
+  backup_count: 5
+  
+  # 日志文件
+  files:
+    api: "logs/api.log"
+    scheduler: "logs/scheduler.log"
+    crawler: "logs/crawler.log"
+    error: "logs/error.log"
+
+# 通知配置
+notifications:
+  enabled: false
+  webhook_url: ""
+  
+  # 通知事件
+  events:
+    - "service_start"
+    - "service_stop"
+    - "data_update_success"
+    - "data_update_failed"
+    - "health_check_failed"
+    
+# 性能配置
+performance:
+  # 数据库连接池
+  db_pool_size: 10
+  db_pool_timeout: 30
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    type: "memory"  # memory, redis
+    ttl_seconds: 3600
+    max_size: 1000
+    
+  # 异步配置
+  async_workers: 4
+  async_queue_size: 1000
+
+# 安全配置
+security:
+  # HTTPS配置
+  ssl:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+    
+  # 访问控制
+  access_control:
+    enabled: false
+    allowed_ips: []
+    blocked_ips: []
+    
+  # 数据加密
+  encryption:
+    enabled: false
+    key: ""
+
+# 备份配置
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # 每天凌晨2点
+  retention_days: 30
+  compression: true
+  
+  # 备份目标
+  targets:
+    - type: "local"
+      path: "backups/"
+    # - type: "s3"
+    #   bucket: "my-backup-bucket"
+    #   region: "us-east-1"
+
+# 监控配置
+monitoring:
+  enabled: true
+  
+  # 健康检查
+  health_check:
+    interval_seconds: 30
+    timeout_seconds: 10
+    
+  # 指标收集
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    
+  # 告警规则
+  alerts:
+    - name: "api_response_time"
+      condition: "avg_response_time > 5000"
+      severity: "warning"
+      
+    - name: "data_update_failed"
+      condition: "last_update_failed"
+      severity: "critical"
+      
+    - name: "disk_space_low"
+      condition: "disk_usage > 90"
+      severity: "warning"
+
+# 开发配置
+development:
+  debug: false
+  hot_reload: false
+  profiling: false
+  
+  # 测试数据
+  test_data:
+    enabled: false
+    sample_size: 100
+    
+# 部署配置
+deployment:
+  method: "docker"  # docker, systemd, manual
+  
+  # Docker配置
+  docker:
+    image_name: "market-price-system"
+    image_tag: "latest"
+    network: "market-network"
+    
+    # 资源限制
+    resources:
+      cpu_limit: "4"
+      memory_limit: "16g"
+      
+  # Systemd配置
+  systemd:
+    user: "ubuntu"
+    group: "ubuntu"
+    restart_policy: "always"
+    
+# 环境变量
+environment:
+  PYTHONPATH: "/app"
+  PYTHONUNBUFFERED: "1"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  DB_PATH: "data/market_data.db"
+  LOG_LEVEL: "INFO"
+  
+# 插件扩展配置
+extensions:
+  # 数据导出
+  export:
+    enabled: true
+    formats: ["csv", "json", "excel"]
+    max_records: 10000
+    
+  # 数据分析
+  analytics:
+    enabled: true
+    trend_analysis: true
+    price_prediction: false
+    
+  # 第三方集成
+  integrations:
+    modelscope:
+      enabled: true
+      api_key: ""
+      
+    # 地图服务
+    maps:
+      provider: "amap"  # amap, baidu, google
+      api_key: ""
