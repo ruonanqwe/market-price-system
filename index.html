@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>市场价格预测系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏢 市场价格预测系统</h1>
+        
+        <div class="form-group">
+            <label for="symbol">股票代码:</label>
+            <input type="text" id="symbol" value="AAPL" placeholder="输入股票代码，如 AAPL">
+        </div>
+        
+        <div class="form-group">
+            <label for="days">预测天数:</label>
+            <input type="number" id="days" value="7" min="1" max="30">
+        </div>
+        
+        <button onclick="predictPrice()">🔮 预测价格</button>
+        <button onclick="checkHealth()">💚 检查服务状态</button>
+        <button onclick="getHistory()">📊 获取历史数据</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function predictPrice() {
+            const symbol = document.getElementById('symbol').value;
+            const days = document.getElementById('days').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = '⏳ 正在预测...';
+                
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symbol, days: parseInt(days) })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 预测结果</h3>
+                        <p><strong>股票代码:</strong> ${data.symbol}</p>
+                        <p><strong>预测天数:</strong> ${data.days} 天</p>
+                        <p><strong>预测结果:</strong> ${JSON.stringify(data.prediction, null, 2)}</p>
+                    `;
+                } else {
+                    throw new Error(data.error || '预测失败');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><p>${error.message}</p>`;
+            }
+        }
+        
+        async function checkHealth() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = '⏳ 检查中...';
+                
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 服务状态</h3>
+                        <p><strong>状态:</strong> ${data.status}</p>
+                        <p><strong>服务:</strong> ${data.service}</p>
+                        <p><strong>版本:</strong> ${data.version}</p>
+                        <p><strong>时间:</strong> ${data.timestamp}</p>
+                    `;
+                } else {
+                    throw new Error('服务不可用');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><p>${error.message}</p>`;
+            }
+        }
+        
+        async function getHistory() {
+            const symbol = document.getElementById('symbol').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = '⏳ 获取历史数据...';
+                
+                const response = await fetch(`/history/${symbol}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>📊 历史数据</h3>
+                        <p><strong>股票代码:</strong> ${data.symbol}</p>
+                        <p><strong>数据条数:</strong> ${data.history ? data.history.length : 0}</p>
+                        <pre>${JSON.stringify(data.history, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(data.error || '获取历史数据失败');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<h3>❌ 错误</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
