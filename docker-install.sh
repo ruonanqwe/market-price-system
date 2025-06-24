@@ -77,11 +77,11 @@ create_project_structure() {
     mkdir -p data logs reports backups ssl grafana/provisioning
     
     # 复制应用文件
-    cp ../*.py .
-    cp ../requirements.txt .
-    cp ../Dockerfile .
-    cp ../docker-compose.yml .
-    cp ../nginx.conf .
+    cp *.py .
+    cp requirements.txt .
+    cp Dockerfile .
+    cp docker-compose.yml .
+    cp nginx.conf .
     
     log_info "项目目录创建完成: $PROJECT_DIR"
 }

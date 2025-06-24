@@ -20,6 +20,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import uvicorn
 from market_crawler import MarketCrawler
+from csv_data_manager import CSVDataManager, get_csv_manager
 import threading
 import time
 
@@ -223,6 +224,7 @@ class DatabaseManager:
 
 # 全局变量
 db_manager = DatabaseManager()
+csv_manager = get_csv_manager()  # CSV数据管理器
 crawler = MarketCrawler()
 crawler_thread = None
 crawler_running = False
@@ -322,10 +324,15 @@ def run_crawler():
                     logger.error(f"爬取 {province_name} 数据失败: {str(e)}")
                     continue
             
-            # 保存到数据库
+            # 保存到数据库和CSV
             if all_data:
+                # 保存到SQLite数据库
                 db_manager.insert_market_data(all_data)
-                logger.info(f"本轮爬取完成，共获取 {len(all_data)} 条数据")
+
+                # 同时保存到CSV文件
+                csv_manager.save_data(all_data)
+
+                logger.info(f"本轮爬取完成，共获取 {len(all_data)} 条数据，已保存到数据库和CSV文件")
             
             # 等待30分钟后进行下一轮爬取
             time.sleep(30 * 60)
@@ -387,16 +394,48 @@ async def health_check():
 
 @app.post("/api/prices/query")
 async def query_prices(query: PriceQuery):
-    """查询市场价格"""
+    """查询市场价格（从SQLite数据库）"""
     try:
         results = db_manager.query_prices(query)
         return {
             "success": True,
             "count": len(results),
-            "data": results
+            "data": results,
+            "source": "database"
         }
     except Exception as e:
         logger.error(f"查询价格失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/prices")
+async def get_prices(
+    province: Optional[str] = None,
+    variety: Optional[str] = None,
+    market: Optional[str] = None,
+    limit: int = 100
+):
+    """从CSV文件查询市场价格（推荐使用）"""
+    try:
+        # 构建过滤条件
+        filters = {}
+        if province:
+            filters['省份'] = province
+        if variety:
+            filters['品种名称'] = variety
+        if market:
+            filters['市场名称'] = market
+
+        results = csv_manager.search_data(filters, limit)
+
+        return {
+            "success": True,
+            "count": len(results),
+            "data": results,
+            "source": "csv",
+            "filters": filters
+        }
+    except Exception as e:
+        logger.error(f"从CSV查询价格失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/prices/nearby")
@@ -432,26 +471,15 @@ async def get_provinces():
 
 @app.get("/api/varieties")
 async def get_varieties(province: Optional[str] = None):
-    """获取品种列表"""
+    """获取品种列表（从CSV文件）"""
     try:
-        conn = sqlite3.connect(db_manager.db_path)
-        cursor = conn.cursor()
-        
-        if province:
-            cursor.execute(
-                "SELECT DISTINCT variety_name FROM market_prices WHERE province LIKE ? ORDER BY variety_name",
-                (f"%{province}%",)
-            )
-        else:
-            cursor.execute("SELECT DISTINCT variety_name FROM market_prices ORDER BY variety_name")
-        
-        varieties = [row[0] for row in cursor.fetchall()]
-        conn.close()
-        
+        varieties = csv_manager.get_varieties(province)
+
         return {
             "success": True,
             "count": len(varieties),
-            "data": varieties
+            "data": varieties,
+            "source": "csv"
         }
     except Exception as e:
         logger.error(f"获取品种列表失败: {str(e)}")
@@ -459,29 +487,33 @@ async def get_varieties(province: Optional[str] = None):
 
 @app.get("/api/markets")
 async def get_markets(province: Optional[str] = None):
-    """获取市场列表"""
+    """获取市场列表（从CSV文件）"""
     try:
-        conn = sqlite3.connect(db_manager.db_path)
-        cursor = conn.cursor()
-        
-        if province:
-            cursor.execute(
-                "SELECT DISTINCT market_name, province FROM market_prices WHERE province LIKE ? ORDER BY market_name",
-                (f"%{province}%",)
-            )
-        else:
-            cursor.execute("SELECT DISTINCT market_name, province FROM market_prices ORDER BY province, market_name")
-        
-        markets = [{"name": row[0], "province": row[1]} for row in cursor.fetchall()]
-        conn.close()
-        
+        markets = csv_manager.get_markets(province)
+
         return {
             "success": True,
             "count": len(markets),
-            "data": markets
+            "data": markets,
+            "source": "csv"
         }
     except Exception as e:
         logger.error(f"获取市场列表失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/statistics")
+async def get_statistics():
+    """获取数据统计信息"""
+    try:
+        stats = csv_manager.get_statistics()
+
+        return {
+            "success": True,
+            "data": stats,
+            "source": "csv"
+        }
+    except Exception as e:
+        logger.error(f"获取统计信息失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
