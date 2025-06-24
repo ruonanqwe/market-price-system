@@ -1,0 +1,23 @@
+# Dashboard Dockerfile - 可视化管理面板
+FROM nginx:alpine
+
+# 安装必要的工具
+RUN apk add --no-cache curl jq
+
+# 创建目录
+RUN mkdir -p /usr/share/nginx/html/dashboard
+
+# 复制静态文件
+COPY dashboard/ /usr/share/nginx/html/
+COPY nginx-dashboard.conf /etc/nginx/nginx.conf
+
+# 设置权限
+RUN chmod -R 755 /usr/share/nginx/html
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

@@ -8,6 +8,7 @@
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import sqlite3
@@ -372,6 +373,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    logger.info("静态文件目录已挂载: /static")
+
+if os.path.exists("dashboard"):
+    app.mount("/dashboard", StaticFiles(directory="dashboard"), name="dashboard")
+    logger.info("管理面板已挂载: /dashboard")
 
 @app.get("/")
 async def root():

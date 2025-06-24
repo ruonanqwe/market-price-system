@@ -111,6 +111,41 @@ services:
     networks:
       - market-network
 
+  # Portainer Docker管理界面
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: market-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    environment:
+      - PORTAINER_ADMIN_PASSWORD_FILE=/tmp/portainer_password
+    command: --admin-password-file /tmp/portainer_password
+    networks:
+      - market-network
+
+  # 系统监控可视化面板
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: market-dashboard
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./dashboard:/usr/share/nginx/html
+      - ./nginx-dashboard.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - market-api
+      - portainer
+    networks:
+      - market-network
+
 networks:
   market-network:
     driver: bridge
@@ -118,3 +153,4 @@ networks:
 volumes:
   prometheus_data:
   grafana_data:
+  portainer_data:

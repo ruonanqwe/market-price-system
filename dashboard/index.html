@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农产品价格监控系统 - 管理面板</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-seedling me-2"></i>
+                农产品价格监控系统
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog me-1"></i>管理工具
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="openPortainer()">
+                            <i class="fab fa-docker me-2"></i>Docker管理 (Portainer)
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="openGrafana()">
+                            <i class="fas fa-chart-line me-2"></i>监控面板 (Grafana)
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="openPrometheus()">
+                            <i class="fas fa-database me-2"></i>指标收集 (Prometheus)
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt me-2"></i>仪表板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#services" onclick="showSection('services')">
+                                <i class="fas fa-server me-2"></i>服务状态
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#containers" onclick="showSection('containers')">
+                                <i class="fab fa-docker me-2"></i>容器管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#monitoring" onclick="showSection('monitoring')">
+                                <i class="fas fa-chart-bar me-2"></i>系统监控
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#logs" onclick="showSection('logs')">
+                                <i class="fas fa-file-alt me-2"></i>日志查看
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#settings" onclick="showSection('settings')">
+                                <i class="fas fa-cog me-2"></i>系统设置
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区域 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- 仪表板部分 -->
+                <div id="dashboard-section" class="content-section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">系统仪表板</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 状态卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="text-white-75 small">API服务</div>
+                                            <div class="text-lg fw-bold" id="api-status">检查中...</div>
+                                        </div>
+                                        <i class="fas fa-server fa-2x text-white-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card bg-warning text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="text-white-75 small">调度器</div>
+                                            <div class="text-lg fw-bold" id="scheduler-status">检查中...</div>
+                                        </div>
+                                        <i class="fas fa-clock fa-2x text-white-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card bg-success text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="text-white-75 small">数据记录</div>
+                                            <div class="text-lg fw-bold" id="data-count">-</div>
+                                        </div>
+                                        <i class="fas fa-database fa-2x text-white-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6">
+                            <div class="card bg-danger text-white mb-4">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="text-white-75 small">系统负载</div>
+                                            <div class="text-lg fw-bold" id="system-load">-</div>
+                                        </div>
+                                        <i class="fas fa-tachometer-alt fa-2x text-white-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 快速访问面板 -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-external-link-alt me-1"></i>快速访问
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6 mb-3">
+                                            <button class="btn btn-outline-primary w-100" onclick="openPortainer()">
+                                                <i class="fab fa-docker d-block mb-2"></i>
+                                                Portainer<br>
+                                                <small>Docker管理</small>
+                                            </button>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <button class="btn btn-outline-success w-100" onclick="openDataDashboard()">
+                                                <i class="fas fa-chart-line d-block mb-2"></i>
+                                                数据面板<br>
+                                                <small>价格监控</small>
+                                            </button>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <button class="btn btn-outline-warning w-100" onclick="openGrafana()">
+                                                <i class="fas fa-chart-bar d-block mb-2"></i>
+                                                Grafana<br>
+                                                <small>监控面板</small>
+                                            </button>
+                                        </div>
+                                        <div class="col-6 mb-3">
+                                            <button class="btn btn-outline-info w-100" onclick="openAPI()">
+                                                <i class="fas fa-code d-block mb-2"></i>
+                                                API文档<br>
+                                                <small>接口说明</small>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-info-circle me-1"></i>系统信息
+                                </div>
+                                <div class="card-body">
+                                    <div id="system-info">
+                                        <div class="d-flex justify-content-between">
+                                            <span>系统版本:</span>
+                                            <span class="text-muted">v1.0.0</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <span>运行时间:</span>
+                                            <span class="text-muted" id="uptime">-</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <span>最后更新:</span>
+                                            <span class="text-muted" id="last-update">-</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <span>容器状态:</span>
+                                            <span class="text-muted" id="container-status">检查中...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 服务状态部分 -->
+                <div id="services-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">服务状态</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshServices()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 服务状态卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="fas fa-server me-2"></i>API 服务</h6>
+                                    <span class="badge bg-success" id="api-service-badge">运行中</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">端口</small>
+                                            <div class="fw-bold">8000</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">状态</small>
+                                            <div class="fw-bold" id="api-service-status">健康</div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="testApiService()">测试连接</button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewApiLogs()">查看日志</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="fas fa-clock me-2"></i>调度器服务</h6>
+                                    <span class="badge bg-warning" id="scheduler-service-badge">运行中</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">最后运行</small>
+                                            <div class="fw-bold" id="scheduler-last-run">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">下次运行</small>
+                                            <div class="fw-bold" id="scheduler-next-run">-</div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="triggerScheduler()">手动触发</button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewSchedulerLogs()">查看日志</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><i class="fab fa-docker me-2"></i>Portainer</h6>
+                                    <span class="badge bg-info" id="portainer-service-badge">运行中</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">端口</small>
+                                            <div class="fw-bold">9000</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">容器数</small>
+                                            <div class="fw-bold" id="container-count">-</div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="openPortainer()">打开面板</button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewPortainerLogs()">查看日志</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细服务信息表格 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list me-2"></i>详细服务信息</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>服务名称</th>
+                                            <th>状态</th>
+                                            <th>端口</th>
+                                            <th>CPU使用率</th>
+                                            <th>内存使用</th>
+                                            <th>运行时间</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services-table-body">
+                                        <tr>
+                                            <td colspan="7" class="text-center">
+                                                <div class="loading"></div>
+                                                <span class="ms-2">加载中...</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 容器管理部分 -->
+                <div id="containers-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">容器管理</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="refreshContainers()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="openPortainer()">
+                                <i class="fab fa-docker me-1"></i>打开 Portainer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 容器统计 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-play-circle fa-2x text-success mb-2"></i>
+                                    <h4 class="card-title" id="running-containers">-</h4>
+                                    <p class="card-text text-muted">运行中</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-stop-circle fa-2x text-danger mb-2"></i>
+                                    <h4 class="card-title" id="stopped-containers">-</h4>
+                                    <p class="card-text text-muted">已停止</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-hdd fa-2x text-info mb-2"></i>
+                                    <h4 class="card-title" id="total-images">-</h4>
+                                    <p class="card-text text-muted">镜像数量</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-network-wired fa-2x text-warning mb-2"></i>
+                                    <h4 class="card-title" id="total-networks">-</h4>
+                                    <p class="card-text text-muted">网络数量</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Portainer 嵌入式界面 -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fab fa-docker me-2"></i>Portainer 容器管理</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadPortainerFrame()">
+                                <i class="fas fa-external-link-alt me-1"></i>在新窗口打开
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="embed-responsive embed-responsive-16by9">
+                                <iframe id="portainer-frame" class="embed-responsive-item" style="width: 100%; height: 600px; border: none;" src="about:blank"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统监控部分 -->
+                <div id="monitoring-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">系统监控</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="refreshMonitoring()">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="openGrafana()">
+                                <i class="fas fa-chart-line me-1"></i>Grafana
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 系统资源监控 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-microchip me-2"></i>CPU 使用率</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>当前使用率</span>
+                                        <span class="fw-bold" id="cpu-usage">-</span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" role="progressbar" id="cpu-progress" style="width: 0%"></div>
+                                    </div>
+                                    <canvas id="cpu-chart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-memory me-2"></i>内存使用</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>已使用</span>
+                                        <span class="fw-bold" id="memory-usage">-</span>
+                                    </div>
+                                    <div class="progress mb-3">
+                                        <div class="progress-bar" role="progressbar" id="memory-progress" style="width: 0%"></div>
+                                    </div>
+                                    <canvas id="memory-chart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 网络和磁盘监控 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-network-wired me-2"></i>网络流量</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">入站流量</small>
+                                            <div class="fw-bold" id="network-in">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">出站流量</small>
+                                            <div class="fw-bold" id="network-out">-</div>
+                                        </div>
+                                    </div>
+                                    <canvas id="network-chart" width="400" height="150"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-hdd me-2"></i>磁盘使用</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">已使用</small>
+                                            <div class="fw-bold" id="disk-used">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">可用空间</small>
+                                            <div class="fw-bold" id="disk-free">-</div>
+                                        </div>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" id="disk-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 应用性能监控 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-tachometer-alt me-2"></i>应用性能指标</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-primary" id="api-requests">-</h4>
+                                        <small class="text-muted">API 请求/分钟</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-success" id="response-time">-</h4>
+                                        <small class="text-muted">平均响应时间</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-warning" id="error-rate">-</h4>
+                                        <small class="text-muted">错误率</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-info" id="data-processed">-</h4>
+                                        <small class="text-muted">数据处理量</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日志查看部分 -->
+                <div id="logs-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">日志查看</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+                                    <i class="fas fa-sync-alt me-1"></i>刷新
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                                    <i class="fas fa-trash me-1"></i>清空
+                                </button>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadLogs()">
+                                    <i class="fas fa-download me-1"></i>下载
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 日志过滤器 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6><i class="fas fa-filter me-2"></i>日志过滤</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">服务</label>
+                                    <select class="form-select" id="log-service-filter">
+                                        <option value="">全部服务</option>
+                                        <option value="api">API 服务</option>
+                                        <option value="scheduler">调度器</option>
+                                        <option value="portainer">Portainer</option>
+                                        <option value="dashboard">Dashboard</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">日志级别</label>
+                                    <select class="form-select" id="log-level-filter">
+                                        <option value="">全部级别</option>
+                                        <option value="ERROR">错误</option>
+                                        <option value="WARN">警告</option>
+                                        <option value="INFO">信息</option>
+                                        <option value="DEBUG">调试</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">时间范围</label>
+                                    <select class="form-select" id="log-time-filter">
+                                        <option value="1h">最近1小时</option>
+                                        <option value="6h">最近6小时</option>
+                                        <option value="24h" selected>最近24小时</option>
+                                        <option value="7d">最近7天</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">搜索关键词</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="log-search" placeholder="搜索日志...">
+                                        <button class="btn btn-outline-secondary" onclick="searchLogs()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 日志显示区域 -->
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-file-alt me-2"></i>实时日志</h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="auto-refresh-logs" checked>
+                                <label class="form-check-label" for="auto-refresh-logs">自动刷新</label>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="log-container" style="height: 500px; overflow-y: auto; background-color: #1e1e1e; color: #ffffff; font-family: 'Courier New', monospace; padding: 15px;">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p class="mt-2">加载日志中...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置部分 -->
+                <div id="settings-section" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">系统设置</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button type="button" class="btn btn-sm btn-success" onclick="saveSettings()">
+                                <i class="fas fa-save me-1"></i>保存设置
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- 基本设置 -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-cog me-2"></i>基本设置</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">系统名称</label>
+                                        <input type="text" class="form-control" id="system-name" value="农产品价格监控系统">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">刷新间隔 (秒)</label>
+                                        <input type="number" class="form-control" id="refresh-interval" value="30" min="10" max="300">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">时区</label>
+                                        <select class="form-select" id="timezone">
+                                            <option value="Asia/Shanghai" selected>Asia/Shanghai (UTC+8)</option>
+                                            <option value="UTC">UTC (UTC+0)</option>
+                                            <option value="America/New_York">America/New_York (UTC-5)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable-notifications" checked>
+                                        <label class="form-check-label" for="enable-notifications">
+                                            启用系统通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 数据设置 -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-database me-2"></i>数据设置</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">数据保留天数</label>
+                                        <input type="number" class="form-control" id="data-retention" value="30" min="1" max="365">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">备份频率</label>
+                                        <select class="form-select" id="backup-frequency">
+                                            <option value="daily" selected>每日</option>
+                                            <option value="weekly">每周</option>
+                                            <option value="monthly">每月</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="auto-backup" checked>
+                                        <label class="form-check-label" for="auto-backup">
+                                            启用自动备份
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 监控设置 -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-chart-line me-2"></i>监控设置</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">CPU 警告阈值 (%)</label>
+                                        <input type="number" class="form-control" id="cpu-threshold" value="80" min="50" max="95">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">内存警告阈值 (%)</label>
+                                        <input type="number" class="form-control" id="memory-threshold" value="85" min="50" max="95">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">磁盘警告阈值 (%)</label>
+                                        <input type="number" class="form-control" id="disk-threshold" value="90" min="70" max="95">
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable-alerts" checked>
+                                        <label class="form-check-label" for="enable-alerts">
+                                            启用性能警报
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 安全设置 -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-shield-alt me-2"></i>安全设置</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">会话超时 (分钟)</label>
+                                        <input type="number" class="form-control" id="session-timeout" value="60" min="15" max="480">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">日志级别</label>
+                                        <select class="form-select" id="log-level">
+                                            <option value="DEBUG">调试</option>
+                                            <option value="INFO" selected>信息</option>
+                                            <option value="WARN">警告</option>
+                                            <option value="ERROR">错误</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable-audit" checked>
+                                        <label class="form-check-label" for="enable-audit">
+                                            启用操作审计
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统操作 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-tools me-2"></i>系统操作</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-primary w-100 mb-2" onclick="backupSystem()">
+                                        <i class="fas fa-download me-2"></i>备份系统
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-warning w-100 mb-2" onclick="restartServices()">
+                                        <i class="fas fa-redo me-2"></i>重启服务
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-info w-100 mb-2" onclick="updateSystem()">
+                                        <i class="fas fa-sync-alt me-2"></i>检查更新
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-danger w-100 mb-2" onclick="resetSystem()">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>重置系统
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
